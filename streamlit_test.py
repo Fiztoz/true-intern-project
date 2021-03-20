@@ -1,7 +1,5 @@
 import streamlit as st
 import pandas as pd
-# import pickle
-# import os
 from sklearn.linear_model import LinearRegression
 import plotly.figure_factory as ff
 import plotly.graph_objects as go
@@ -17,38 +15,10 @@ st.set_page_config(
 	page_icon='./t1.png',  # String, anything supported by st.image, or None.
 )
 
-
-def color_negative_red(val):
-    """
-    Takes a scalar and returns a string with
-    the css property `'color: red'` for negative
-    strings, black otherwise.
-    """
-    color = "red" if val < 0 else "black"
-    return "color: %s" % color
-
-
-def highlight_max(data, color="yellow"):
-    """highlight the maximum in a Series or DataFrame"""
-    attr = "background-color: {}".format(color)
-    if data.ndim == 1:  # Series from .apply(axis=0) or axis=1
-        is_max = data == data.max()
-        return [attr if v else "" for v in is_max]
-    else:  # from .apply(axis=None)
-        is_max = data == data.max().max()
-        return pd.DataFrame(
-            np.where(is_max, attr, ""), index=data.index, columns=data.columns
-        )
-
 st.image('./true.png')
-# st.write("""
-# # Mini Project!
-# """)
 
 st.sidebar.header('User Input')
-# st.sidebar.subheader('Please enter your data:')
 dataview1 = st.sidebar.selectbox('Data View Option', ['RR_Fault_Trendline','District_Fault_Table'])
-# dataview1 = st.sidebar.selectbox('Data View Option', ['RR_Fault_Trendline','District_Fault_Table','Tech Performance'])
 
 up_file = st.file_uploader('Upload your data file', type=["txt","xlsx","csv"])
 if up_file is not None:
@@ -58,13 +28,6 @@ else:
 
 if up_file is not None:
     df = pd.read_table(up_file)
-    df_use = df[['FAULT_TICKET_NUMBER','FAULT_STATUS','FAULT_TELEPHONE_NUMBER','FAULT_FAULT_TYPE_CD','FAULT_WORK_CD_1',
-    'FAULT_DISPO_CD_1','FAULT_TECH_ID_NAME_1','FAULT_PROD_CATEGARY','FAULT_DEPARTMENT_GROUP','FAULT_LATITUDE',
-    'FAULT_LONGITUDE','FAULT_TICKET_TYPE','FAULT_CUSTOMER_NAME','FAULT_SLA_FRIST_APPNT_DAY_GROUP','FAULT_OPEN_DATE',
-    'FAULT_COMPLETE_DATE','FAULT_APPOINT_DATE','SCAB_DISTRICT_E','SCAB_PROVINCE_E','RR_TRUCK_FAULT_IS_RR30DAY',
-    'RR_TRUCK_FAULT_SEQ_TICKET','RR_TRUCK_FAULT_DIFF_DATE']]
-        # st.write(df_use.head())
-
 
     if dataview1 == 'RR_Fault_Trendline':
 
@@ -86,7 +49,6 @@ if up_file is not None:
             allticket = allticket[allticket.FAULT_COMPLETE_WEEK == wk_value]
 
         ##########      RR Truck Roll      ###########
-
         
         rr = df[['FAULT_TICKET_NUMBER','FAULT_TELEPHONE_NUMBER','FAULT_TICKET_TYPE','FAULT_DEPARTMENT_GROUP','RR_TRUCK_FAULT_IS_RR30DAY','SCAB_PROVINCE_E','SCAB_DISTRICT_E','FAULT_COMPLETE_DATE','FAULT_COMPLETE_WEEK']]
         rr['RR_TRUCK_FAULT_IS_RR30DAY'] = rr['RR_TRUCK_FAULT_IS_RR30DAY'].replace(np.nan, 0)
@@ -119,11 +81,6 @@ if up_file is not None:
         tran_rr = new_rr.transpose()
         tran_rr
         
-        
-        # chart_new_rr = nrt.groupby(['FAULT_COMPLETE_DATE'])[['RR']].sum()
-        # chart_new_rr['Accumulated RR'] = accu_rr
-        # chart_new_rr['Accumulated Fault'] = accu_f
-        # chart_new_rr['RR Rate Accumulate(%)'] = percent
         chart_new_rr = new_rr
         chart_new_rr.reset_index(drop=False, inplace=True)
 
@@ -132,16 +89,6 @@ if up_file is not None:
         # regression
         reg = LinearRegression().fit(np.vstack(X), Y)
         chart_new_rr['bestfit'] = reg.predict(np.vstack(X))
-
-
-        # # plotly figure setup
-        # fig=go.Figure()
-        # fig.add_trace(go.Bar(name='RR Rate', x=X, y=Y.values))
-        # fig.add_trace(go.Scatter(name='line of best fit', x=X, y=chart_new_rr['bestfit'], mode='lines'))
-        # # plotly figure layout
-        # fig.update_layout(title="Truck Roll RR Rate(%)", xaxis_title = 'Day [i+1]', yaxis_title = 'RR Rate(%)')
-        # # fig.show()
-        # st.plotly_chart(fig, use_container_width=True)
 
         fig3 = px.bar(chart_new_rr, y='RR Rate Accumulate(%)', x='FAULT_COMPLETE_DATE',text ='RR Rate Accumulate(%)',title="Truck Roll RR Rate(%)" )
         fig3.update_traces(texttemplate='%{text:.2s}', textposition='outside')
@@ -200,13 +147,8 @@ if up_file is not None:
         all_tran_rr
         
             
-        # all_chart_new_rr = all_nrt.groupby(['FAULT_COMPLETE_DATE'])[['RR']].sum()
-        # all_chart_new_rr['Accumulated RR'] = all_accu_rr
-        # all_chart_new_rr['Accumulated Fault'] = all_accu_f
-        # all_chart_new_rr['RR Rate Accumulate(%)'] = all_percent
         all_chart_new_rr = all_new_rr
         all_chart_new_rr.reset_index(drop=False, inplace=True)
-        # chart_new_rr
 
         all_Y=all_chart_new_rr['RR Rate Accumulate(%)']
         all_X=all_chart_new_rr.index
@@ -214,16 +156,6 @@ if up_file is not None:
         all_reg = LinearRegression().fit(np.vstack(all_X), all_Y)
         all_chart_new_rr['bestfit'] = all_reg.predict(np.vstack(all_X))
 
-
-        # # plotly figure setup
-        # all_fig=go.Figure()
-        # all_fig.add_trace(go.Bar(name='RR Rate', x=all_X, y=all_Y.values))
-        # all_fig.add_trace(go.Scatter(name='line of best fit', x=all_X, y=all_chart_new_rr['bestfit'], mode='lines'))
-        # # plotly figure layout
-        # all_fig.update_layout(title="All Fault RR Rate(%)", xaxis_title = 'Day [i+1]', yaxis_title = 'RR Rate(%)')
-        # # fig.show()
-
-        # st.plotly_chart(all_fig, use_container_width=True)
 
         all_fig3 = px.bar(all_chart_new_rr, y='RR Rate Accumulate(%)', x='FAULT_COMPLETE_DATE',text ='RR Rate Accumulate(%)',title="All Type RR Rate(%)" )
         all_fig3.update_traces(texttemplate='%{text:.2s}', textposition='outside')
@@ -451,12 +383,5 @@ if up_file is not None:
         st.write('ALL TYPE Accumulated:')
         st.write('#Noted : Click at the top Right Botton to view in Full Screen')
         district_all
-
-        # Colors
-        # st.table(
-        #     district.style.applymap(color_negative_red).apply(
-        #         highlight_max, color="yellow", axis=0
-        #     )
-        # )
 
         ###################################################################################
