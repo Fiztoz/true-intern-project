@@ -1,7 +1,6 @@
 import streamlit as st
 import pandas as pd
 from sklearn.linear_model import LinearRegression
-import plotly.figure_factory as ff
 import plotly.graph_objects as go
 import plotly.express as px
 import numpy as np
