@@ -61,6 +61,7 @@ if up_file is not None:
             nrt = nrt[nrt.FAULT_COMPLETE_WEEK == wk_value]
 
         nrt.reset_index(drop=True, inplace=True)
+	st.write('#Noted : Click at the top Right Botton to view in Full Screen')
         st.write("Truck Roll Data :")
         nrt
 
@@ -127,6 +128,7 @@ if up_file is not None:
             all_nrt = all_nrt[all_nrt.FAULT_COMPLETE_WEEK == wk_value]
 
         all_nrt.reset_index(drop=True, inplace=True)
+	st.write('#Noted : Click at the top Right Botton to view in Full Screen')
         st.write("All Type Data :")
         all_nrt
         all_new_rr = allticket.groupby(['FAULT_COMPLETE_DATE'])[['FAULT_TICKET_TYPE']].count()
