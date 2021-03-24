@@ -16,6 +16,7 @@ st.set_page_config(
 )
 
 
+
 def color_negative_red(val):
     """
     Takes a scalar and returns a string with
@@ -142,12 +143,12 @@ if up_file is not None:
         # st.plotly_chart(fig, use_container_width=True)
 
         fig = px.bar(chart_new_rr, y='RR Rate Accumulate(%)', x='FAULT_COMPLETE_DATE',text ='RR Rate Accumulate(%)',title="Truck Roll RR Rate(%)" )
-        fig.update_traces(texttemplate='%{text:.2s}%', textposition='outside')
+        fig.update_traces(texttemplate='%{text:.1f}%', textposition='outside')
         fig.update_layout(uniformtext_minsize=8, uniformtext_mode='hide')
         st.plotly_chart(fig, use_container_width=True)
 
         fig2 = px.line(chart_new_rr, y='RR Rate Accumulate(%)', x='FAULT_COMPLETE_DATE',text ='RR Rate Accumulate(%)',title="Truck Roll RR Rate(%)" )
-        fig2.update_traces(texttemplate='%{text:.3s}%', textposition='top center')
+        fig2.update_traces(texttemplate='%{text:.2f}%', textposition='top center')
         # fig4.update_layout(uniformtext_minsize=8, uniformtext_mode='hide')
         st.plotly_chart(fig2, use_container_width=True)
 
@@ -198,6 +199,7 @@ if up_file is not None:
         all_accu_rr = list(accumulate(all_new_rr.iloc[:,2]))
         all_new_rr['Accumulated RR'] = all_accu_rr
         all_percent = round(all_new_rr.iloc[:,4] / all_new_rr.iloc[:,3] *100, 2)
+
         all_new_rr['RR Rate Accumulate(%)'] = all_percent
         st.write('RR All Fault Report : ')
         all_tran_rr = all_new_rr.transpose()
@@ -230,7 +232,7 @@ if up_file is not None:
         # st.plotly_chart(all_fig, use_container_width=True)
 
         all_fig = px.bar(all_chart_new_rr, y='RR Rate Accumulate(%)', x='FAULT_COMPLETE_DATE',text ='RR Rate Accumulate(%)',title="All Type RR Rate(%)" )
-        all_fig.update_traces(texttemplate='%{text:.2s}', textposition='outside')
+        all_fig.update_traces(texttemplate='%{text:.1f}%', textposition='outside')
         all_fig.update_layout(uniformtext_minsize=8, uniformtext_mode='hide')
         st.plotly_chart(all_fig, use_container_width=True)
 
@@ -247,8 +249,8 @@ if up_file is not None:
         # all_fig2.update_layout(title="All Type RR Rate(%)", xaxis_title = 'Day', yaxis_title = 'RR Rate(%)')
         # st.plotly_chart(all_fig2, use_container_width=True)
 
-        all_fig2 = px.line(all_chart_new_rr, y='RR Rate Accumulate(%)', x='FAULT_COMPLETE_DATE',text ='RR Rate Accumulate(%)',title="Truck Roll RR Rate(%)" )
-        all_fig2.update_traces(texttemplate='%{text:.3s}%', textposition='top center')
+        all_fig2 = px.line(all_chart_new_rr, y='RR Rate Accumulate(%)', x='FAULT_COMPLETE_DATE',text ='RR Rate Accumulate(%)',title="All Type RR Rate(%)" )
+        all_fig2.update_traces(texttemplate='%{text:.2f}%', textposition='top center')
         # fig4.update_layout(uniformtext_minsize=8, uniformtext_mode='hide')
         st.plotly_chart(all_fig2, use_container_width=True)
 
