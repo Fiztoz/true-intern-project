@@ -114,11 +114,22 @@ if up_file is not None:
         new_rr['Accumulated RR'] = accu_rr
         percent = round(new_rr.iloc[:,4] / new_rr.iloc[:,3] *100, 2)
         new_rr['RR Rate Accumulate(%)'] = percent
+        # new_rr['RR Rate Accumulate(%)'] = new_rr['RR Rate Accumulate(%)'].astype(str)
         st.write('RR Truck Roll Report : ')
         tran_rr = new_rr.transpose()
-        tran_rr
-        
-        
+        # tran_rr =tran_rr.astype(str)
+        # tran_rr
+        changetype = tran_rr.transpose()
+        changetype['RR Rate Accumulate(%)'] = changetype['RR Rate Accumulate(%)'].astype(str)
+        changetype.iloc[:,0:5] = changetype.iloc[:,0:5].astype(int)
+        # asdw.dtypes 
+        tran_rr2 = changetype.transpose()
+        tran_rr2
+     
+        # chart_new_rr = allticket.groupby(['FAULT_COMPLETE_DATE'])[['FAULT_TICKET_TYPE']].count()
+        # chart_new_rr.rename(columns={'FAULT_TICKET_TYPE':'All Tiket Count'},inplace = True)
+        # chart_new_rr['FAULT_TICKET_NUMBER'] = nrt.groupby(['FAULT_COMPLETE_DATE'])[['FAULT_TICKET_NUMBER']].count()
+        # chart_new_rr['FAULT_TICKET_NUMBER'] = chart_new_rr['FAULT_TICKET_NUMBER'].replace(np.nan, 0)
         # chart_new_rr = nrt.groupby(['FAULT_COMPLETE_DATE'])[['RR']].sum()
         # chart_new_rr['Accumulated RR'] = accu_rr
         # chart_new_rr['Accumulated Fault'] = accu_f
@@ -203,7 +214,14 @@ if up_file is not None:
         all_new_rr['RR Rate Accumulate(%)'] = all_percent
         st.write('RR All Fault Report : ')
         all_tran_rr = all_new_rr.transpose()
-        all_tran_rr
+        # all_tran_rr
+        
+        all_changetype = all_tran_rr.transpose()
+        all_changetype['RR Rate Accumulate(%)'] = all_changetype['RR Rate Accumulate(%)'].astype(str)
+        all_changetype.iloc[:,0:5] = all_changetype.iloc[:,0:5].astype(int)
+        # asdw.dtypes 
+        all_tran_rr2 = all_changetype.transpose()
+        all_tran_rr2
         
             
         # all_chart_new_rr = all_nrt.groupby(['FAULT_COMPLETE_DATE'])[['RR']].sum()
@@ -353,6 +371,7 @@ if up_file is not None:
         d_percent = round(district.iloc[:,2] / district.iloc[:,1] *100, 2)
         district['%RR30Day'] = d_percent
         district['%RR30Day'] = district['%RR30Day'].replace(np.nan, 0)
+        district['%RR30Day'] = district['%RR30Day'].astype(str)
         
 
         ########## FILTER TO FIND RR [TRUCK ROLL]#############
@@ -526,6 +545,7 @@ if up_file is not None:
         d2_percent = round(district_all.iloc[:,2] / district_all.iloc[:,1] *100, 2)
         district_all['%RR30Day'] = d2_percent
         district_all['%RR30Day'] = district_all['%RR30Day'].replace(np.nan, 0)
+        district_all['%RR30Day'] = district_all['%RR30Day'].astype(str)
         
 
         ########## FILTER TO FIND RR [All Type]#############
