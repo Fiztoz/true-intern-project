@@ -155,7 +155,7 @@ if up_file is not None:
         nrt.reset_index(drop=True, inplace=True)
         st.write("Truck Roll Data :")
         nrt
-        st.markdown(get_table_download_link(nrt,'test'), unsafe_allow_html=True)
+        st.markdown(get_table_download_link(nrt,f"Truck_Data_{province}({rr_select})"), unsafe_allow_html=True)
 
         new_rr = allticket.groupby(['FAULT_COMPLETE_DATE'])[['FAULT_TICKET_TYPE']].count()
         new_rr.rename(columns={'FAULT_TICKET_TYPE':'All Tiket Count'},inplace = True)
@@ -182,8 +182,7 @@ if up_file is not None:
         tran_rr2 = changetype.transpose()
         tran_rr2
 
-        nametran = "RR Truck"
-        st.markdown(get_table_download_link(tran_rr2,nametran), unsafe_allow_html=True)
+        st.markdown(get_table_download_link(tran_rr2,f"RR_Truck_Report_{province}"), unsafe_allow_html=True)
     
         # chart_new_rr = allticket.groupby(['FAULT_COMPLETE_DATE'])[['FAULT_TICKET_TYPE']].count()
         # chart_new_rr.rename(columns={'FAULT_TICKET_TYPE':'All Tiket Count'},inplace = True)
@@ -257,6 +256,8 @@ if up_file is not None:
         all_nrt.reset_index(drop=True, inplace=True)
         st.write("All Type Data :")
         all_nrt
+        st.markdown(get_table_download_link(all_nrt,f"ALL_Data_{province}({rr_select})"), unsafe_allow_html=True)
+
         all_new_rr = allticket.groupby(['FAULT_COMPLETE_DATE'])[['FAULT_TICKET_TYPE']].count()
         all_new_rr.rename(columns={'FAULT_TICKET_TYPE':'All Tiket Count'},inplace = True)
 
@@ -281,7 +282,7 @@ if up_file is not None:
         # asdw.dtypes 
         all_tran_rr2 = all_changetype.transpose()
         all_tran_rr2
-        
+        st.markdown(get_table_download_link(all_tran_rr2,f"RR_ALL_Report_{province}"), unsafe_allow_html=True)
             
         # all_chart_new_rr = all_nrt.groupby(['FAULT_COMPLETE_DATE'])[['RR']].sum()
         # all_chart_new_rr['Accumulated RR'] = all_accu_rr
@@ -513,7 +514,7 @@ if up_file is not None:
         st.write('Truck Roll :')
         st.write('#Noted : Click at the top Right Botton to view in Full Screen')
         district
-        st.markdown(get_table_download_link(district,'RR30Day Truck Roll'), unsafe_allow_html=True)
+        st.markdown(get_table_download_link(district,f'RR30Day Truck Roll_{province}_{d_select}'), unsafe_allow_html=True)
         # Colors
         # st.table(
         #     district.style.applymap(color_negative_red).apply(
@@ -688,7 +689,7 @@ if up_file is not None:
         st.write('#Noted : Click at the top Right Botton to view in Full Screen')
         district_all
 
-        st.markdown(get_table_download_link(district_all,'RR30Day All Type'), unsafe_allow_html=True)
+        st.markdown(get_table_download_link(district_all,f'RR30Day All Type_{province}_{d_select}'), unsafe_allow_html=True)
         # Colors
         # st.table(
         #     district.style.applymap(color_negative_red).apply(
