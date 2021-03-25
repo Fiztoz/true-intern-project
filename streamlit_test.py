@@ -8,6 +8,11 @@ import numpy as np
 from itertools import accumulate
 import matplotlib.pyplot as plt
 
+import base64
+from io import BytesIO
+
+
+
 st.set_page_config(
 	layout="wide",  # Can be "centered" or "wide". In the future also "dashboard", etc.
 	initial_sidebar_state="auto",  # Can be "auto", "expanded", "collapsed"
@@ -16,6 +21,53 @@ st.set_page_config(
 )
 
 
+def to_excel(df):
+    output = BytesIO()
+    writer = pd.ExcelWriter(output, engine='xlsxwriter')
+    df.to_excel(writer, sheet_name='Sheet1')
+    writer.save()
+    processed_data = output.getvalue()
+    return processed_data
+
+def get_table_download_link(df,file_name):
+    """Generates a link allowing the data in a given panda dataframe to be downloaded
+    in:  dataframe
+    out: href string
+    """
+    val = to_excel(df)
+    b64 = base64.b64encode(val)
+    button_id = 'button'
+    custom_css = f""" 
+        <style>
+            #{button_id} {{
+                background-color: rgb(255, 255, 255);
+                color: rgb(38, 39, 48);
+                padding: 0.25em 0.38em;
+                position: relative;
+                text-decoration: none;
+                border-radius: 4px;
+                border-width: 1px;
+                border-style: solid;
+                border-color: rgb(230, 234, 241);
+                border-image: initial;
+            }} 
+            #{button_id}:hover {{
+                border-color: rgb(246, 51, 102);
+                color: rgb(246, 51, 102);
+            }}
+            #{button_id}:active {{
+                box-shadow: none;
+                background-color: rgb(246, 51, 102);
+                color: white;
+                }}
+        </style> """
+
+    dl_link = (
+        custom_css
+        + f'<a download="{file_name}.xlsx" id="{button_id}" href="data:application/octet-stream;base64,{b64.decode()}">Download : {file_name}</a><br></br>'
+    )
+    # href = f'<a href="data:application/octet-stream;base64,{b64.decode()}" download="Your_File.xlsx">Download Excel file</a>'
+    return dl_link
 
 def color_negative_red(val):
     """
@@ -55,6 +107,7 @@ if up_file is not None:
 else:
     st.write('You selected `%s`' % up_file)
 
+
 if up_file is not None:
     df = pd.read_table(up_file)
     # df_use = df[['FAULT_TICKET_NUMBER','FAULT_STATUS','FAULT_TELEPHONE_NUMBER','FAULT_FAULT_TYPE_CD','FAULT_WORK_CD_1',
@@ -63,6 +116,7 @@ if up_file is not None:
     # 'FAULT_COMPLETE_DATE','FAULT_APPOINT_DATE','SCAB_DISTRICT_E','SCAB_PROVINCE_E','RR_TRUCK_FAULT_IS_RR30DAY',
     # 'RR_TRUCK_FAULT_SEQ_TICKET','RR_TRUCK_FAULT_DIFF_DATE']]
         # st.write(df_use.head())
+
 
 
     if dataview1 == 'RR_Fault_Trendline':
@@ -87,7 +141,8 @@ if up_file is not None:
         ##########      RR Truck Roll      ###########
 
         
-        rr = df[['FAULT_TICKET_NUMBER','FAULT_TELEPHONE_NUMBER','FAULT_TICKET_TYPE','FAULT_DEPARTMENT_GROUP','RR_TRUCK_FAULT_IS_RR30DAY','SCAB_PROVINCE_E','SCAB_DISTRICT_E','FAULT_COMPLETE_DATE','FAULT_COMPLETE_WEEK']]
+        # rr = df[['FAULT_TICKET_NUMBER','FAULT_TELEPHONE_NUMBER','FAULT_TICKET_TYPE','FAULT_DEPARTMENT_GROUP','RR_TRUCK_FAULT_IS_RR30DAY','SCAB_PROVINCE_E','SCAB_DISTRICT_E','FAULT_COMPLETE_DATE','FAULT_COMPLETE_WEEK']]
+        rr= df
         rr['RR_TRUCK_FAULT_IS_RR30DAY'] = rr['RR_TRUCK_FAULT_IS_RR30DAY'].replace(np.nan, 0)
         r30 = pd.get_dummies(rr.RR_TRUCK_FAULT_IS_RR30DAY)
         rr['RR'] = r30.RR
@@ -100,6 +155,7 @@ if up_file is not None:
         nrt.reset_index(drop=True, inplace=True)
         st.write("Truck Roll Data :")
         nrt
+        st.markdown(get_table_download_link(nrt,'test'), unsafe_allow_html=True)
 
         new_rr = allticket.groupby(['FAULT_COMPLETE_DATE'])[['FAULT_TICKET_TYPE']].count()
         new_rr.rename(columns={'FAULT_TICKET_TYPE':'All Tiket Count'},inplace = True)
@@ -125,7 +181,10 @@ if up_file is not None:
         # asdw.dtypes 
         tran_rr2 = changetype.transpose()
         tran_rr2
-     
+
+        nametran = "RR Truck"
+        st.markdown(get_table_download_link(tran_rr2,nametran), unsafe_allow_html=True)
+    
         # chart_new_rr = allticket.groupby(['FAULT_COMPLETE_DATE'])[['FAULT_TICKET_TYPE']].count()
         # chart_new_rr.rename(columns={'FAULT_TICKET_TYPE':'All Tiket Count'},inplace = True)
         # chart_new_rr['FAULT_TICKET_NUMBER'] = nrt.groupby(['FAULT_COMPLETE_DATE'])[['FAULT_TICKET_NUMBER']].count()
@@ -454,7 +513,7 @@ if up_file is not None:
         st.write('Truck Roll :')
         st.write('#Noted : Click at the top Right Botton to view in Full Screen')
         district
-
+        st.markdown(get_table_download_link(district,'RR30Day Truck Roll'), unsafe_allow_html=True)
         # Colors
         # st.table(
         #     district.style.applymap(color_negative_red).apply(
@@ -629,6 +688,7 @@ if up_file is not None:
         st.write('#Noted : Click at the top Right Botton to view in Full Screen')
         district_all
 
+        st.markdown(get_table_download_link(district_all,'RR30Day All Type'), unsafe_allow_html=True)
         # Colors
         # st.table(
         #     district.style.applymap(color_negative_red).apply(
