@@ -1,7 +1,7 @@
 import streamlit as st
 import pandas as pd
 from sklearn.linear_model import LinearRegression
-# import plotly.figure_factory as ff
+
 import plotly.graph_objects as go
 import plotly.express as px
 import numpy as np
@@ -66,40 +66,18 @@ def get_table_download_link(df,file_name):
         custom_css
         + f'<a download="{file_name}.xlsx" id="{button_id}" href="data:application/octet-stream;base64,{b64.decode()}">Download : {file_name}</a><br></br>'
     )
-    # href = f'<a href="data:application/octet-stream;base64,{b64.decode()}" download="Your_File.xlsx">Download Excel file</a>'
+   
     return dl_link
 
-def color_negative_red(val):
-    """
-    Takes a scalar and returns a string with
-    the css property `'color: red'` for negative
-    strings, black otherwise.
-    """
-    color = "red" if val < 0 else "black"
-    return "color: %s" % color
 
-
-def highlight_max(data, color="yellow"):
-    """highlight the maximum in a Series or DataFrame"""
-    attr = "background-color: {}".format(color)
-    if data.ndim == 1:  # Series from .apply(axis=0) or axis=1
-        is_max = data == data.max()
-        return [attr if v else "" for v in is_max]
-    else:  # from .apply(axis=None)
-        is_max = data == data.max().max()
-        return pd.DataFrame(
-            np.where(is_max, attr, ""), index=data.index, columns=data.columns
-        )
 
 st.image('./true.png')
-# st.write("""
-# # Mini Project!
-# """)
+
 
 st.sidebar.header('User Input')
-# st.sidebar.subheader('Please enter your data:')
-dataview1 = st.sidebar.selectbox('Data View Option', ['RR_Fault_Trendline','District_Fault_Table'])
-# dataview1 = st.sidebar.selectbox('Data View Option', ['RR_Fault_Trendline','District_Fault_Table','Tech Performance'])
+
+dataview1 = st.sidebar.selectbox('Data View Option', ['RR_Fault','District_Fault_Table'])
+
 
 up_file = st.file_uploader('Upload your data file', type=["txt","xlsx","csv"])
 if up_file is not None:
@@ -110,16 +88,9 @@ else:
 
 if up_file is not None:
     df = pd.read_table(up_file)
-    # df_use = df[['FAULT_TICKET_NUMBER','FAULT_STATUS','FAULT_TELEPHONE_NUMBER','FAULT_FAULT_TYPE_CD','FAULT_WORK_CD_1',
-    # 'FAULT_DISPO_CD_1','FAULT_TECH_ID_NAME_1','FAULT_PROD_CATEGARY','FAULT_DEPARTMENT_GROUP','FAULT_LATITUDE',
-    # 'FAULT_LONGITUDE','FAULT_TICKET_TYPE','FAULT_CUSTOMER_NAME','FAULT_SLA_FRIST_APPNT_DAY_GROUP','FAULT_OPEN_DATE',
-    # 'FAULT_COMPLETE_DATE','FAULT_APPOINT_DATE','SCAB_DISTRICT_E','SCAB_PROVINCE_E','RR_TRUCK_FAULT_IS_RR30DAY',
-    # 'RR_TRUCK_FAULT_SEQ_TICKET','RR_TRUCK_FAULT_DIFF_DATE']]
-        # st.write(df_use.head())
 
 
-
-    if dataview1 == 'RR_Fault_Trendline':
+    if dataview1 == 'RR_Fault':
 
         province =st.sidebar.selectbox('Province Option',df.SCAB_PROVINCE_E.unique())
 
@@ -129,6 +100,8 @@ if up_file is not None:
         with c2:
             if rr_select == 'Week':
                 wk_value = st.selectbox('Choose Week',df.FAULT_COMPLETE_WEEK.unique())
+                data_select = 'RR_Accumulated'
+                data_select2 = 'RR_Accumulated'
 
         if rr_select == 'Month':
             allticket = df[['FAULT_TICKET_NUMBER','FAULT_TELEPHONE_NUMBER','FAULT_TICKET_TYPE','FAULT_FAULT_TYPE_CD','FAULT_DEPARTMENT_GROUP','FAULT_DEPARTMENT','RR_TRUCK_FAULT_IS_RR30DAY','RR_ALL_FAULT_IS_RR30DAY','SCAB_PROVINCE_E','SCAB_DISTRICT_E','FAULT_COMPLETE_DATE','FAULT_COMPLETE_WEEK']]
@@ -141,7 +114,6 @@ if up_file is not None:
         ##########      RR Truck Roll      ###########
 
         
-        # rr = df[['FAULT_TICKET_NUMBER','FAULT_TELEPHONE_NUMBER','FAULT_TICKET_TYPE','FAULT_DEPARTMENT_GROUP','RR_TRUCK_FAULT_IS_RR30DAY','SCAB_PROVINCE_E','SCAB_DISTRICT_E','FAULT_COMPLETE_DATE','FAULT_COMPLETE_WEEK']]
         rr= df
         rr['RR_TRUCK_FAULT_IS_RR30DAY'] = rr['RR_TRUCK_FAULT_IS_RR30DAY'].replace(np.nan, 0)
         r30 = pd.get_dummies(rr.RR_TRUCK_FAULT_IS_RR30DAY)
@@ -154,95 +126,103 @@ if up_file is not None:
 
         nrt.reset_index(drop=True, inplace=True)
         st.write("Truck Roll Data :")
-        nrt
+        nrt[['FAULT_TICKET_NUMBER','FAULT_TELEPHONE_NUMBER','FAULT_TICKET_TYPE','FAULT_DEPARTMENT_GROUP','RR_TRUCK_FAULT_IS_RR30DAY','SCAB_PROVINCE_E','SCAB_DISTRICT_E','FAULT_COMPLETE_DATE','FAULT_COMPLETE_WEEK']]
         st.markdown(get_table_download_link(nrt,f"Truck_Data_{province}({rr_select})"), unsafe_allow_html=True)
 
-        new_rr = allticket.groupby(['FAULT_COMPLETE_DATE'])[['FAULT_TICKET_TYPE']].count()
-        new_rr.rename(columns={'FAULT_TICKET_TYPE':'All Tiket Count'},inplace = True)
+        if rr_select == 'Month':
+            c1, c2,c3= st.beta_columns((1, 1,3))
+            with c1:
+              data_select = st.selectbox('View Data[Truck Roll]', ['RR_Accumulated','FAULT_WEEK'])
 
-        new_rr['FAULT_TICKET_NUMBER'] = nrt.groupby(['FAULT_COMPLETE_DATE'])[['FAULT_TICKET_NUMBER']].count()
-        new_rr['FAULT_TICKET_NUMBER'] = new_rr['FAULT_TICKET_NUMBER'].replace(np.nan, 0)
-        new_rr['RR'] = nrt.groupby(['FAULT_COMPLETE_DATE'])[['RR']].sum()
-        new_rr['RR'] = new_rr['RR'].replace(np.nan, 0)
-        accu_f = list(accumulate(new_rr.iloc[:,1]))
-        new_rr['Accumulated Fault'] = accu_f
-        accu_rr = list(accumulate(new_rr.iloc[:,2]))
-        new_rr['Accumulated RR'] = accu_rr
-        percent = round(new_rr.iloc[:,4] / new_rr.iloc[:,3] *100, 2)
-        new_rr['RR Rate Accumulate(%)'] = percent
-        # new_rr['RR Rate Accumulate(%)'] = new_rr['RR Rate Accumulate(%)'].astype(str)
-        st.write('RR Truck Roll Report : ')
-        tran_rr = new_rr.transpose()
-        # tran_rr =tran_rr.astype(str)
-        # tran_rr
-        changetype = tran_rr.transpose()
-        changetype['RR Rate Accumulate(%)'] = changetype['RR Rate Accumulate(%)'].astype(str)
-        changetype.iloc[:,0:5] = changetype.iloc[:,0:5].astype(int)
-        # asdw.dtypes 
-        tran_rr2 = changetype.transpose()
-        tran_rr2
+        if data_select == 'RR_Accumulated':
+            new_rr = allticket.groupby(['FAULT_COMPLETE_DATE'])[['FAULT_TICKET_TYPE']].count()
+            new_rr.rename(columns={'FAULT_TICKET_TYPE':'All Tiket Count'},inplace = True)
 
-        st.markdown(get_table_download_link(tran_rr2,f"RR_Truck_Report_{province}"), unsafe_allow_html=True)
-    
-        # chart_new_rr = allticket.groupby(['FAULT_COMPLETE_DATE'])[['FAULT_TICKET_TYPE']].count()
-        # chart_new_rr.rename(columns={'FAULT_TICKET_TYPE':'All Tiket Count'},inplace = True)
-        # chart_new_rr['FAULT_TICKET_NUMBER'] = nrt.groupby(['FAULT_COMPLETE_DATE'])[['FAULT_TICKET_NUMBER']].count()
-        # chart_new_rr['FAULT_TICKET_NUMBER'] = chart_new_rr['FAULT_TICKET_NUMBER'].replace(np.nan, 0)
-        # chart_new_rr = nrt.groupby(['FAULT_COMPLETE_DATE'])[['RR']].sum()
-        # chart_new_rr['Accumulated RR'] = accu_rr
-        # chart_new_rr['Accumulated Fault'] = accu_f
-        # chart_new_rr['RR Rate Accumulate(%)'] = percent
-        chart_new_rr = new_rr
-        chart_new_rr.reset_index(drop=False, inplace=True)
+            new_rr['FAULT_TICKET_NUMBER'] = nrt.groupby(['FAULT_COMPLETE_DATE'])[['FAULT_TICKET_NUMBER']].count()
+            new_rr['FAULT_TICKET_NUMBER'] = new_rr['FAULT_TICKET_NUMBER'].replace(np.nan, 0)
+            new_rr['RR'] = nrt.groupby(['FAULT_COMPLETE_DATE'])[['RR']].sum()
+            new_rr['RR'] = new_rr['RR'].replace(np.nan, 0)
+            accu_f = list(accumulate(new_rr.iloc[:,1]))
+            new_rr['Accumulated Fault'] = accu_f
+            accu_rr = list(accumulate(new_rr.iloc[:,2]))
+            new_rr['Accumulated RR'] = accu_rr
+            percent = round(new_rr.iloc[:,4] / new_rr.iloc[:,3] *100, 2)
+            new_rr['RR Rate Accumulate(%)'] = percent
+            # new_rr['RR Rate Accumulate(%)'] = new_rr['RR Rate Accumulate(%)'].astype(str)
+            st.write('RR Truck Roll Report : ')
+            tran_rr = new_rr.transpose()
+            # tran_rr =tran_rr.astype(str)
+            # tran_rr
+            changetype = tran_rr.transpose()
+            changetype['RR Rate Accumulate(%)'] = changetype['RR Rate Accumulate(%)'].astype(str)
+            changetype.iloc[:,0:5] = changetype.iloc[:,0:5].astype(int)
+            # asdw.dtypes 
+            tran_rr2 = changetype.transpose()
+            tran_rr2
 
-        Y=chart_new_rr['RR Rate Accumulate(%)']
-        X=chart_new_rr.index
-        # regression
-        reg = LinearRegression().fit(np.vstack(X), Y)
-        chart_new_rr['bestfit'] = reg.predict(np.vstack(X))
+            st.markdown(get_table_download_link(tran_rr2,f"RR_Truck_Report_{province}"), unsafe_allow_html=True)
+        
+            chart_new_rr = new_rr
+            chart_new_rr.reset_index(drop=False, inplace=True)
 
+            Y=chart_new_rr['RR Rate Accumulate(%)']
+            X=chart_new_rr.index
 
-        # # plotly figure setup
-        # fig=go.Figure()
-        # fig.add_trace(go.Bar(name='RR Rate', x=X, y=Y.values))
-        # fig.add_trace(go.Scatter(name='line of best fit', x=X, y=chart_new_rr['bestfit'], mode='lines'))
-        # # plotly figure layout
-        # fig.update_layout(title="Truck Roll RR Rate(%)", xaxis_title = 'Day [i+1]', yaxis_title = 'RR Rate(%)')
-        # # fig.show()
-        # st.plotly_chart(fig, use_container_width=True)
+            fig2 = px.line(chart_new_rr, y='RR Rate Accumulate(%)', x='FAULT_COMPLETE_DATE',text ='RR Rate Accumulate(%)',title="Truck Roll RR Rate(%)" )
+            fig2.update_traces(texttemplate='%{text:.2f}%', textposition='top center')
+            st.plotly_chart(fig2, use_container_width=True)
 
-        fig = px.bar(chart_new_rr, y='RR Rate Accumulate(%)', x='FAULT_COMPLETE_DATE',text ='RR Rate Accumulate(%)',title="Truck Roll RR Rate(%)" )
-        fig.update_traces(texttemplate='%{text:.1f}%', textposition='outside')
-        fig.update_layout(uniformtext_minsize=8, uniformtext_mode='hide')
-        st.plotly_chart(fig, use_container_width=True)
+        if data_select == 'FAULT_WEEK':
+            fault_week = allticket.groupby(['FAULT_COMPLETE_WEEK'])[['FAULT_TICKET_NUMBER']].count()
+            fault_week.rename(columns={'FAULT_TICKET_NUMBER':'All Ticket Count'},inplace = True)
 
-        fig2 = px.line(chart_new_rr, y='RR Rate Accumulate(%)', x='FAULT_COMPLETE_DATE',text ='RR Rate Accumulate(%)',title="Truck Roll RR Rate(%)" )
-        fig2.update_traces(texttemplate='%{text:.2f}%', textposition='top center')
-        # fig4.update_layout(uniformtext_minsize=8, uniformtext_mode='hide')
-        st.plotly_chart(fig2, use_container_width=True)
+            fault_week['FAULT_TICKET_NUMBER'] = nrt.groupby(['FAULT_COMPLETE_WEEK'])[['FAULT_TICKET_NUMBER']].count()
+            fault_week['FAULT_TICKET_NUMBER'] = fault_week['FAULT_TICKET_NUMBER'].replace(np.nan, 0)
+            fault_rate = round(fault_week.iloc[:,1] / fault_week.iloc[:,0] *100, 2)
+            fault_week['Fault_Rate(%)'] = fault_rate
+            fault_week['RR'] = nrt.groupby(['FAULT_COMPLETE_WEEK'])[['RR']].sum()
+            fault_week['RR'] = fault_week['RR'].replace(np.nan, 0)
+            fault_rr_rate = round(fault_week.iloc[:,3] / fault_week.iloc[:,1] *100, 2)
+            fault_week['Fault_RR_Rate(%)'] = fault_rr_rate
+            st.write('Truck Roll Report : ')
+            fault_week1 = fault_week.transpose()
+            fault_week1 = fault_week1.transpose()
+            fault_week1['Fault_Rate(%)'] = fault_week1['Fault_Rate(%)'].astype(str) 
+            fault_week1['Fault_RR_Rate(%)'] = fault_week1['Fault_RR_Rate(%)'].astype(str) 
+            fault_week1
+            st.markdown(get_table_download_link(fault_week1,f"Truck_{data_select}_{province}"), unsafe_allow_html=True)
 
+            chart_fault_week = fault_week
+            chart_fault_week.reset_index(drop=False, inplace=True)
 
-        # fig2 = go.Figure(data=go.Scatter(name='RR Rate',x = X, y = Y.values))
-        # fig2.add_trace(go.Scatter(name='line of best fit', x=X, y=chart_new_rr['bestfit'], mode='lines'))
-        # for x,y in zip(X,Y):
-        #     a = '(Day:%s,' %(x+1)
-        #     a = a+'%s ' %y
-        #     a = a+"%)"
-        #     fig2.add_annotation(x=x, y=y,
-        #         text=a,
-        #         showarrow=False,
-        #         yshift=10)
-        # fig2.update_layout(showlegend=False)
-        # fig2.update_layout(title="Truck Roll RR Rate(%)", xaxis_title = 'Day', yaxis_title = 'RR Rate(%)')
-        # st.plotly_chart(fig2, use_container_width=True)
-
-
+            X= chart_fault_week['FAULT_COMPLETE_WEEK']
+            Y = chart_fault_week['Fault_RR_Rate(%)']
+            Z = chart_fault_week['Fault_Rate(%)']
+            fig = go.Figure(data=go.Scatter(name='RR Rate',x = X, y = Y))
+            fig.add_trace(go.Scatter(name='Fault Rate', x=X, y=Z))
+            for x,y in zip(X,Y):
+                a = '%s' %(y)
+                a = a+' %'
+                fig.add_annotation(x=x, y=y,
+                    text=a,
+                    showarrow=False,
+                    yshift=10)
+            for x,y in zip(X,Z):
+                a = '%s' %(y)
+                a = a+' %'
+                fig.add_annotation(x=x, y=y,
+                    text=a,
+                    showarrow=False,
+                    yshift=10)
+            fig.update_layout(showlegend=True)
+            fig.update_layout(title="Truck Roll Rate in Week(%)", xaxis_title = 'Week', yaxis_title = 'Rate(%)')
+            st.plotly_chart(fig, use_container_width=True)
         #############################################
 
         ##########      RR All Fault      ###########
 
 
-        allrr = df[['FAULT_TICKET_NUMBER','FAULT_TELEPHONE_NUMBER','FAULT_TICKET_TYPE','RR_ALL_FAULT_IS_RR30DAY','SCAB_PROVINCE_E','SCAB_DISTRICT_E','FAULT_COMPLETE_DATE','FAULT_COMPLETE_WEEK']]
+        allrr = df
         allrr['RR_ALL_FAULT_IS_RR30DAY'] = allrr['RR_ALL_FAULT_IS_RR30DAY'].replace(np.nan, 0)
         allr30 = pd.get_dummies(allrr.RR_ALL_FAULT_IS_RR30DAY)
         allrr['RR'] = allr30.RR
@@ -255,82 +235,95 @@ if up_file is not None:
 
         all_nrt.reset_index(drop=True, inplace=True)
         st.write("All Type Data :")
-        all_nrt
+        all_nrt[['FAULT_TICKET_NUMBER','FAULT_TELEPHONE_NUMBER','FAULT_TICKET_TYPE','RR_ALL_FAULT_IS_RR30DAY','SCAB_PROVINCE_E','SCAB_DISTRICT_E','FAULT_COMPLETE_DATE','FAULT_COMPLETE_WEEK']]
         st.markdown(get_table_download_link(all_nrt,f"ALL_Data_{province}({rr_select})"), unsafe_allow_html=True)
+        if rr_select == 'Month':
+            c1, c2,c3= st.beta_columns((1, 1,3))
+            with c1:
+              data_select2 = st.selectbox('View Data[ALL Type]', ['RR_Accumulated','FAULT_WEEK'])
 
-        all_new_rr = allticket.groupby(['FAULT_COMPLETE_DATE'])[['FAULT_TICKET_TYPE']].count()
-        all_new_rr.rename(columns={'FAULT_TICKET_TYPE':'All Tiket Count'},inplace = True)
+        if data_select2 == 'RR_Accumulated':
+            all_new_rr = allticket.groupby(['FAULT_COMPLETE_DATE'])[['FAULT_TICKET_TYPE']].count()
+            all_new_rr.rename(columns={'FAULT_TICKET_TYPE':'All Tiket Count'},inplace = True)
 
-        all_new_rr['FAULT_TICKET_NUMBER'] = all_nrt.groupby(['FAULT_COMPLETE_DATE'])[['FAULT_TICKET_NUMBER']].count()
-        all_new_rr['FAULT_TICKET_NUMBER'] = all_new_rr['FAULT_TICKET_NUMBER'].replace(np.nan, 0)
-        all_new_rr['RR'] = all_nrt.groupby(['FAULT_COMPLETE_DATE'])[['RR']].sum()
-        all_new_rr['RR'] = all_new_rr['RR'].replace(np.nan, 0)
-        all_accu_f = list(accumulate(all_new_rr.iloc[:,1]))
-        all_new_rr['Accumulated Fault'] = all_accu_f
-        all_accu_rr = list(accumulate(all_new_rr.iloc[:,2]))
-        all_new_rr['Accumulated RR'] = all_accu_rr
-        all_percent = round(all_new_rr.iloc[:,4] / all_new_rr.iloc[:,3] *100, 2)
+            all_new_rr['FAULT_TICKET_NUMBER'] = all_nrt.groupby(['FAULT_COMPLETE_DATE'])[['FAULT_TICKET_NUMBER']].count()
+            all_new_rr['FAULT_TICKET_NUMBER'] = all_new_rr['FAULT_TICKET_NUMBER'].replace(np.nan, 0)
+            all_new_rr['RR'] = all_nrt.groupby(['FAULT_COMPLETE_DATE'])[['RR']].sum()
+            all_new_rr['RR'] = all_new_rr['RR'].replace(np.nan, 0)
+            all_accu_f = list(accumulate(all_new_rr.iloc[:,1]))
+            all_new_rr['Accumulated Fault'] = all_accu_f
+            all_accu_rr = list(accumulate(all_new_rr.iloc[:,2]))
+            all_new_rr['Accumulated RR'] = all_accu_rr
+            all_percent = round(all_new_rr.iloc[:,4] / all_new_rr.iloc[:,3] *100, 2)
 
-        all_new_rr['RR Rate Accumulate(%)'] = all_percent
-        st.write('RR All Fault Report : ')
-        all_tran_rr = all_new_rr.transpose()
-        # all_tran_rr
-        
-        all_changetype = all_tran_rr.transpose()
-        all_changetype['RR Rate Accumulate(%)'] = all_changetype['RR Rate Accumulate(%)'].astype(str)
-        all_changetype.iloc[:,0:5] = all_changetype.iloc[:,0:5].astype(int)
-        # asdw.dtypes 
-        all_tran_rr2 = all_changetype.transpose()
-        all_tran_rr2
-        st.markdown(get_table_download_link(all_tran_rr2,f"RR_ALL_Report_{province}"), unsafe_allow_html=True)
+            all_new_rr['RR Rate Accumulate(%)'] = all_percent
+            st.write('RR All Fault Report : ')
+            all_tran_rr = all_new_rr.transpose()
             
-        # all_chart_new_rr = all_nrt.groupby(['FAULT_COMPLETE_DATE'])[['RR']].sum()
-        # all_chart_new_rr['Accumulated RR'] = all_accu_rr
-        # all_chart_new_rr['Accumulated Fault'] = all_accu_f
-        # all_chart_new_rr['RR Rate Accumulate(%)'] = all_percent
-        all_chart_new_rr = all_new_rr
-        all_chart_new_rr.reset_index(drop=False, inplace=True)
-        # chart_new_rr
-
-        all_Y=all_chart_new_rr['RR Rate Accumulate(%)']
-        all_X=all_chart_new_rr.index
-        # regression
-        all_reg = LinearRegression().fit(np.vstack(all_X), all_Y)
-        all_chart_new_rr['bestfit'] = all_reg.predict(np.vstack(all_X))
+            all_changetype = all_tran_rr.transpose()
+            all_changetype['RR Rate Accumulate(%)'] = all_changetype['RR Rate Accumulate(%)'].astype(str)
+            all_changetype.iloc[:,0:5] = all_changetype.iloc[:,0:5].astype(int)
+            all_tran_rr2 = all_changetype.transpose()
+            all_tran_rr2
+            st.markdown(get_table_download_link(all_tran_rr2,f"RR_ALL_Report_{province}"), unsafe_allow_html=True)
+                
+            all_chart_new_rr = all_new_rr
+            all_chart_new_rr.reset_index(drop=False, inplace=True)
 
 
-        # # plotly figure setup
-        # all_fig=go.Figure()
-        # all_fig.add_trace(go.Bar(name='RR Rate', x=all_X, y=all_Y.values))
-        # all_fig.add_trace(go.Scatter(name='line of best fit', x=all_X, y=all_chart_new_rr['bestfit'], mode='lines'))
-        # # plotly figure layout
-        # all_fig.update_layout(title="All Fault RR Rate(%)", xaxis_title = 'Day [i+1]', yaxis_title = 'RR Rate(%)')
-        # # fig.show()
+            all_Y=all_chart_new_rr['RR Rate Accumulate(%)']
+            all_X=all_chart_new_rr.index
 
-        # st.plotly_chart(all_fig, use_container_width=True)
 
-        all_fig = px.bar(all_chart_new_rr, y='RR Rate Accumulate(%)', x='FAULT_COMPLETE_DATE',text ='RR Rate Accumulate(%)',title="All Type RR Rate(%)" )
-        all_fig.update_traces(texttemplate='%{text:.1f}%', textposition='outside')
-        all_fig.update_layout(uniformtext_minsize=8, uniformtext_mode='hide')
-        st.plotly_chart(all_fig, use_container_width=True)
+            all_fig2 = px.line(all_chart_new_rr, y='RR Rate Accumulate(%)', x='FAULT_COMPLETE_DATE',text ='RR Rate Accumulate(%)',title="All Type RR Rate(%)" )
+            all_fig2.update_traces(texttemplate='%{text:.2f}%', textposition='top center')
+            st.plotly_chart(all_fig2, use_container_width=True)
+        
+        if data_select2 == 'FAULT_WEEK':
+            all_fault_week = allticket.groupby(['FAULT_COMPLETE_WEEK'])[['FAULT_TICKET_NUMBER']].count()
+            all_fault_week.rename(columns={'FAULT_TICKET_NUMBER':'All Ticket Count'},inplace = True)
 
-        # all_fig2 = go.Figure(data=go.Scatter(name='RR Rate',x = all_X, y = all_Y.values))
-        # all_fig2.add_trace(go.Scatter(name='line of best fit', x=all_X, y=all_chart_new_rr['bestfit'], mode='lines'))
-        # for x,y in zip(all_X,all_Y):
-        #     a = '(Day:%s,' %(x+1)
-        #     a = a+'%s)' %y
-        #     all_fig2.add_annotation(x=x, y=y,
-        #         text=a,
-        #         showarrow=False,
-        #         yshift=10)
-        # all_fig2.update_layout(showlegend=False)
-        # all_fig2.update_layout(title="All Type RR Rate(%)", xaxis_title = 'Day', yaxis_title = 'RR Rate(%)')
-        # st.plotly_chart(all_fig2, use_container_width=True)
+            all_fault_week['FAULT_TICKET_NUMBER'] = all_nrt.groupby(['FAULT_COMPLETE_WEEK'])[['FAULT_TICKET_NUMBER']].count()
+            all_fault_week['FAULT_TICKET_NUMBER'] = all_fault_week['FAULT_TICKET_NUMBER'].replace(np.nan, 0)
+            all_fault_rate = round(all_fault_week.iloc[:,1] / all_fault_week.iloc[:,0] *100, 2)
+            all_fault_week['Fault_Rate(%)'] = all_fault_rate
+            all_fault_week['RR'] = all_nrt.groupby(['FAULT_COMPLETE_WEEK'])[['RR']].sum()
+            all_fault_week['RR'] = all_fault_week['RR'].replace(np.nan, 0)
+            all_fault_rr_rate = round(all_fault_week.iloc[:,3] / all_fault_week.iloc[:,1] *100, 2)
+            all_fault_week['Fault_RR_Rate(%)'] = all_fault_rr_rate
+            st.write('Truck Roll Report : ')
+            all_fault_week1 = all_fault_week.transpose()
+            all_fault_week1 = all_fault_week1.transpose()
+            all_fault_week1['Fault_Rate(%)'] = all_fault_week1['Fault_Rate(%)'].astype(str) 
+            all_fault_week1['Fault_RR_Rate(%)'] = all_fault_week1['Fault_RR_Rate(%)'].astype(str) 
+            all_fault_week1
+            st.markdown(get_table_download_link(all_fault_week1,f"ALL_{data_select}_{province}"), unsafe_allow_html=True)
 
-        all_fig2 = px.line(all_chart_new_rr, y='RR Rate Accumulate(%)', x='FAULT_COMPLETE_DATE',text ='RR Rate Accumulate(%)',title="All Type RR Rate(%)" )
-        all_fig2.update_traces(texttemplate='%{text:.2f}%', textposition='top center')
-        # fig4.update_layout(uniformtext_minsize=8, uniformtext_mode='hide')
-        st.plotly_chart(all_fig2, use_container_width=True)
+            chart_all_fault_week = all_fault_week
+            chart_all_fault_week.reset_index(drop=False, inplace=True)
+
+            all_X= chart_all_fault_week['FAULT_COMPLETE_WEEK']
+            all_Y = chart_all_fault_week['Fault_RR_Rate(%)']
+            all_Z = chart_all_fault_week['Fault_Rate(%)']
+            all_fig = go.Figure(data=go.Scatter(name='RR Rate',x = all_X, y = all_Y))
+            all_fig.add_trace(go.Scatter(name='Fault Rate', x=all_X, y=all_Z))
+            for x,y in zip(all_X,all_Y):
+                a = '%s' %(y)
+                a = a+' %'
+                all_fig.add_annotation(x=x, y=y,
+                    text=a,
+                    showarrow=False,
+                    yshift=10)
+            for x,y in zip(all_X,all_Z):
+                a = '%s' %(y)
+                a = a+' %'
+                all_fig.add_annotation(x=x, y=y,
+                    text=a,
+                    showarrow=False,
+                    yshift=10)
+            all_fig.update_layout(showlegend=True)
+            all_fig.update_layout(title="All Type Rate in Week(%)", xaxis_title = 'Week', yaxis_title = 'Rate(%)')
+            st.plotly_chart(all_fig, use_container_width=True)
 
         #############################################
 
@@ -371,15 +364,13 @@ if up_file is not None:
             d1rr = pd.get_dummies(d1.RR_TRUCK_FAULT_IS_RR30DAY)
             d1['RR_Truck'] = d1rr.RR
             d1 = d1[d1.FAULT_COMPLETE_DATE == d_value]
-        # d1 = district_table[(district_table.FAULT_DEPARTMENT_GROUP == 'Truck Roll') & (district_table.FAULT_TICKET_TYPE == 'Regular Fault')]
         d1.reset_index(drop=True, inplace=True)
 
         district = district_table.groupby(['SCAB_DISTRICT_E'])[['FAULT_TICKET_TYPE']].count()
         district.rename(columns={'FAULT_TICKET_TYPE':'All Ticket Count'},inplace = True)
         district['Total TT Closed'] = d1.groupby(['SCAB_DISTRICT_E'])[['RR_TRUCK_FAULT_IS_RR30DAY']].count()
 
-        # d1rr = pd.get_dummies(d1.RR_TRUCK_FAULT_IS_RR30DAY)
-        # d1['RR_Truck'] = d1rr.RR
+
 
         district['Total TT 30 Day'] = d1.groupby(['SCAB_DISTRICT_E'])[['RR_Truck']].sum()
 
@@ -392,7 +383,6 @@ if up_file is not None:
         else :
             district_type = district_table[(district_table.FAULT_DEPARTMENT_GROUP == 'Truck Roll')]
             district_type = district_type[district_type.FAULT_COMPLETE_DATE == d_value]
-        # district_type = district_table[(district_table.FAULT_DEPARTMENT_GROUP == 'Truck Roll')]
 
         district_type.reset_index(drop=True, inplace=True)
 
@@ -515,12 +505,6 @@ if up_file is not None:
         st.write('#Noted : Click at the top Right Botton to view in Full Screen')
         district
         st.markdown(get_table_download_link(district,f'RR30Day Truck Roll_{province}_{d_select}'), unsafe_allow_html=True)
-        # Colors
-        # st.table(
-        #     district.style.applymap(color_negative_red).apply(
-        #         highlight_max, color="yellow", axis=0
-        #     )
-        # )
 
         ###################################################################################
 
@@ -540,15 +524,13 @@ if up_file is not None:
             d2['All_Truck'] = d2rr.RR
             d2 = d2[d2.FAULT_COMPLETE_DATE == d_value]
 
-        # d2 = district_table[(district_table.FAULT_TICKET_TYPE == 'Regular Fault')]
         d2.reset_index(drop=True, inplace=True)
 
         district_all = district_table.groupby(['SCAB_DISTRICT_E'])[['FAULT_TICKET_TYPE']].count()
         district_all.rename(columns={'FAULT_TICKET_TYPE':'All Tiket Count'},inplace = True)
         district_all['Total TT Closed'] = d2.groupby(['SCAB_DISTRICT_E'])[['RR_ALL_FAULT_IS_RR30DAY']].count()
 
-        # d2rr = pd.get_dummies(d2.RR_ALL_FAULT_IS_RR30DAY)
-        # d2['All_Truck'] = d2rr.RR
+
 
         district_all['Total TT 30 Day'] = d2.groupby(['SCAB_DISTRICT_E'])[['All_Truck']].sum()
 
@@ -561,7 +543,6 @@ if up_file is not None:
             district_type = district_table[(district_table.FAULT_DEPARTMENT_GROUP == 'Truck Roll')]
             district_type = district_type[district_type.FAULT_COMPLETE_DATE == d_value]
 
-        # district_type = district_table[(district_table.FAULT_DEPARTMENT_GROUP == 'Truck Roll')]
         district_type.reset_index(drop=True, inplace=True)
 
         d_type = pd.get_dummies(district_type.FAULT_FAULT_TYPE_CD)
@@ -584,11 +565,6 @@ if up_file is not None:
         if '371 | Proactive - Fiber degrade' in d_type.columns:
             district_type['371'] = d_type['371 | Proactive - Fiber degrade']
 
-
-        # district_type['066'] = d_type['066 | Proactive']
-        # district_type['275'] = d_type['275 | ไฟ Los ติด เป็นสีแดง']
-        # district_type['307'] = d_type['307 | Proactive-Fiber broken']
-        # district_type['371'] = d_type['371 | Proactive - Fiber degrade']
 
         district_all['Total TT 066'] = district_type.groupby(['SCAB_DISTRICT_E'])[['066']].sum()
         district_all['Total TT 275'] = district_type.groupby(['SCAB_DISTRICT_E'])[['275']].sum()
@@ -620,7 +596,6 @@ if up_file is not None:
             d2_rnum = district_table[(district_table.RR_ALL_FAULT_IS_RR30DAY == 'RR') & (district_table.FAULT_TICKET_TYPE == 'Regular Fault')]
             d2_rnum = d2_rnum[d2_rnum.FAULT_COMPLETE_DATE == d_value]
 
-        # d2_rnum = district_table[(district_table.RR_ALL_FAULT_IS_RR30DAY == 'RR') & (district_table.FAULT_TICKET_TYPE == 'Regular Fault')]
         d2_rnum.reset_index(drop=True, inplace=True)
 
         ######################################################
@@ -690,11 +665,5 @@ if up_file is not None:
         district_all
 
         st.markdown(get_table_download_link(district_all,f'RR30Day All Type_{province}_{d_select}'), unsafe_allow_html=True)
-        # Colors
-        # st.table(
-        #     district.style.applymap(color_negative_red).apply(
-        #         highlight_max, color="yellow", axis=0
-        #     )
-        # )
 
         ###################################################################################
